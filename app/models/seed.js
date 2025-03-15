@@ -108,13 +108,13 @@ return restaurants;
 
 async function insertRestaurants(restaurants) {
 const restaurantValues = restaurants.map(restaurant => {
-    const newRestaurant = functionSeeding.pgQuoteEscape(restaurant);
+const newRestaurant = functionSeeding.pgQuoteEscape(restaurant);
     return `(
     '${newRestaurant.name}',
     '${newRestaurant.description}',
-    ${newRestaurant.terrace},
-    ${newRestaurant.manager_id},
-    ${newRestaurant.city_id}
+    '${newRestaurant.terrace}',
+    '${newRestaurant.manager_id}',
+    '${newRestaurant.city_id}'
     )`;
 });
 const queryStr = `
@@ -214,12 +214,15 @@ const restaurantHasCookingStyles = restaurantIds
     .map(restaurantId => {
         const cookingStyleIdsFree = [...cookingStyleIds];
         const nbRestaurantCookingStyle = faker.number.int({ min: 1, max: 2 });
+        
         const cookingStyles = [];
         for (let i = 0; i < nbRestaurantCookingStyle; i += 1) {
             const randomCookingStyleIndex = faker.number.int(
             cookingStyleIdsFree.length - 1
             );
             const cookingStyleId = cookingStyleIdsFree.splice(randomCookingStyleIndex,1 )[0];
+            console.log(cookingStyleId);
+            
 
             cookingStyles.push({
             cookingStyleId,
