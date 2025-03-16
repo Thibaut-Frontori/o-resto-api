@@ -1,15 +1,16 @@
-import { faker } from "@faker-js/faker";
+import { fa, faker } from "@faker-js/faker";
 import pg from "./pg.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import functionSeeding from "../utils/functions/function_seeding.js";
+import { log } from "node:console";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const NB_MANAGERS = 5;
-const NB_RESTAURANTS = 2;
+const NB_RESTAURANTS = 4;
 const NB_RATING = 10;// POURQUOI 10_000 ??
-const NB_TYPES = 3;
+const NB_TYPES = 10;
 const NB_CITIES = 3; 
 const SQL_FILE_PATH = path.join(__dirname, "./seeding.sql");
 
@@ -209,29 +210,34 @@ function generateCities(nbCities) {
   }
 
   //restaurant_has_cooking_style
-function generateRestaurantHasCS(restaurantIds, cookingStyleIds) {
-const restaurantHasCookingStyles = restaurantIds
-    .map(restaurantId => {
-        const cookingStyleIdsFree = [...cookingStyleIds];
-        const nbRestaurantCookingStyle = faker.number.int({ min: 1, max: 2 });
-        
-        const cookingStyles = [];
-        for (let i = 0; i < nbRestaurantCookingStyle; i += 1) {
-            const randomCookingStyleIndex = faker.number.int(
-            cookingStyleIdsFree.length - 1
-            );
-            const cookingStyleId = cookingStyleIdsFree.splice(randomCookingStyleIndex,1 )[0];
-            console.log(cookingStyleId);
-            
+function generateRestaurantHasCS(restaurants, cookingStyleIds) {
+    console.log("nombre de restaurants",restaurants.length );
+    const restaurantHasCookingStyles = [];
+       
+    for (let index = 0; index < restaurants.length; index++) {
+        const restaurantId = index + 1;
 
-            cookingStyles.push({
-            cookingStyleId,
-            restaurantId,
-            });
+        const cookingStyleId = [];
+        console.log("nombre de cookingStyleIds",cookingStyleId );
+        
+        const nbCookingStyles = faker.number.int({ min: 1, max: 3 });
+        console.log("nombre de cookingStyleIds",nbCookingStyles );
+          
+        while (cookingStyleId.length < nbCookingStyles) {
+            const id = faker.number.int({ min: 1, max: NB_TYPES });
+            if (!cookingStyleId.includes(id)) {
+                cookingStyleId.push(id);
+            }
         }
-        return cookingStyles;
-    })
-    .flat();
+
+        restaurantHasCookingStyles.push({
+            restaurantId,
+            cookingStyleId,
+        });
+     }
+
+console.log(restaurantHasCookingStyles);
+
 return restaurantHasCookingStyles;
 }
 
@@ -283,8 +289,8 @@ async function generateSeedingFile() {
     console.log("Ratings inserted");
 
     const restaurantsCookingStyles = generateRestaurantHasCS(
-        restaurants.map(r => r.id),
-        cookingStyles.map(c => c.id)
+       restaurants.map(r => r.id),
+       cookingStyles.map(c => c.id)
     );
     await insertRestaurantHasCS(restaurantsCookingStyles);
     console.log("RestaurantsCookingStyles inserted");
