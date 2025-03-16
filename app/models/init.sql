@@ -5,7 +5,7 @@ CREATE DOMAIN postal_code AS text
 
 CREATE DOMAIN "email" AS text
 CHECK(
-    value ~ '(?:[a-z0-9!#$%&''*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&''*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])'
+    VALUE ~ '(?:[a-z0-9!#$%&''*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&''*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])'
 );
 
 DROP TABLE IF EXISTS "manager";
@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS "rating";
 DROP TABLE IF EXISTS "restaurant_cooking_style";
 
 CREATE TABLE "manager" (
-  "id" bigint GENERATED ALWAYS AS IDENTITY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "email" email NOT NULL UNIQUE,
   "pasword" TEXT NOT NULL,
   "firstname" TEXT NOT NULL,
@@ -26,23 +26,23 @@ CREATE TABLE "manager" (
 );
 
 CREATE TABLE "cooking_style" (
-  "id" bigint GENERATED ALWAYS AS IDENTITY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "label" TEXT NOT NULL,
   "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "update_at" TIMESTAMP
 );
 
 CREATE TABLE "city"(
-    "id" bigint GENERATED ALWAYS AS IDENTITY,
+    "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     "name" TEXT NOT NULL,
     "postal_code" postal_code NOT NULL,
     "geopos" POINT NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "update_at" TIMESTAMP
-)
+);
 
-CREATE "restaurant" (
-  "id" bigint GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE restaurant (
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "name" TEXT NOT NULL,
   "descpripion" TEXT NOT NULL,
   "terrace" BOOLEAN NOT NULL DEFAULT FALSE,
@@ -52,23 +52,23 @@ CREATE "restaurant" (
   "update_at" TIMESTAMP
 );
 
-CREATE TABLE "rating" (
-    "id" bigint GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE rating (
+    "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     "value" INTEGER NOT NULL CHECK(value >= 0 AND value <= 5),
     "restaurant_id" INTEGER NOT NULL REFERENCES "restaurant"("id") ON DELETE CASCADE,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "update_at" TIMESTAMP
-)
+);
 
-CREATE TABLE "restaurant_cooking_style" (
-  "id" bigint GENERATED ALWAYS AS IDENTITY,
+CREATE TABLE restaurant_cooking_style (
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "restaurant_id" INTEGER NOT NULL REFERENCES "restaurant"("id") ON DELETE CASCADE,
   "cooking_style_id" INTEGER NOT NULL REFERENCES "cooking_style"("id") ON DELETE CASCADE,
   "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "update_at" TIMESTAMP
-  UNIQUE ("restaurant_id", "cooking_style_id")
+  "update_at" TIMESTAMP,
+  CONSTRAINT unique_restaurant_cooking_style UNIQUE ("restaurant_id", "cooking_style_id")
 );
-CREATE VIEW "restaurant_view" AS 
+CREATE VIEW restaurant_view AS 
     SELECT 
     restaurant.*,
     COALESCE(ROUND(AVG(rating.value), 1), 0.0) AS "rating",

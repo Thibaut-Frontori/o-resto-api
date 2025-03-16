@@ -7,11 +7,11 @@ import { log } from "node:console";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const NB_MANAGERS = 5;
-const NB_RESTAURANTS = 4;
-const NB_RATING = 10;// POURQUOI 10_000 ??
+const NB_MANAGERS = 2000;
+const NB_RESTAURANTS = 2000;
+const NB_RATING = 10000;// POURQUOI 10_000 ??
 const NB_TYPES = 10;
-const NB_CITIES = 3; 
+const NB_CITIES = 100; 
 const SQL_FILE_PATH = path.join(__dirname, "./seeding.sql");
 
 generateSeedingFile();
@@ -110,13 +110,13 @@ return restaurants;
 async function insertRestaurants(restaurants) {
 const restaurantValues = restaurants.map(restaurant => {
 const newRestaurant = functionSeeding.pgQuoteEscape(restaurant);
-    return `(
-    '${newRestaurant.name}',
-    '${newRestaurant.description}',
-    '${newRestaurant.terrace}',
-    '${newRestaurant.manager_id}',
-    '${newRestaurant.city_id}'
-    )`;
+    return functionSeeding.pgQuoteEscape(`(
+    "${newRestaurant.name}",
+    "${newRestaurant.description}",
+    "${newRestaurant.terrace}",
+    "${newRestaurant.manager_id}",
+    "${newRestaurant.city_id}"
+    )`);
 });
 const queryStr = `
 INSERT INTO "restaurants"
