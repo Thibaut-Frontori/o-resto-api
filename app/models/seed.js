@@ -1,17 +1,17 @@
-import { fa, faker } from "@faker-js/faker";
+import fs from "node:fs";
+import { faker } from "@faker-js/faker";
 import pg from "./pg.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import functionSeeding from "../utils/functions/function_seeding.js";
-import { log } from "node:console";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const NB_MANAGERS = 2000;
+const NB_MANAGERS = 1500;
 const NB_RESTAURANTS = 2000;
-const NB_RATING = 10000;// POURQUOI 10_000 ??
+const NB_RATING = 3500;// POURQUOI 10_000 ??
 const NB_TYPES = 10;
-const NB_CITIES = 100; 
+const NB_CITIES = 50; 
 const SQL_FILE_PATH = path.join(__dirname, "./seeding.sql");
 
 generateSeedingFile();
@@ -27,8 +27,8 @@ function generateManagers() {
         const lastName = faker.person.lastName();
         const email = faker.internet.email({firstName, lastName});
         const password = faker.internet.password();
-        const created_at = faker.date.recent();
-        const updated_at = faker.date.recent();
+        const created_at = faker.date.recent().toISOString();
+        const updated_at = faker.date.recent().toISOString();
         
         const manager = {
             firstName,
@@ -43,16 +43,19 @@ function generateManagers() {
     return managers;
 }
 async function insertManagers(managers) {
-    const managerValues = managers.map(manager => `(
-        '${manager.firstName}',
-        '${manager.lastName}',
-        '${manager.email}', 
-        '${manager.password}',
-        '${manager.created_at}',
-        '${manager.updated_at}'
-        )`);
+const managerValues = managers.map(manager =>{
+    const newManager = functionSeeding.pgQuoteEscape(manager);
+    return `(
+        '${newManager.firstName}',
+        '${newManager.lastName}',
+        '${newManager.email}', 
+        '${newManager.password}',
+        '${newManager.created_at}',
+        '${newManager.updated_at}'
+        )`
+})
     const queryStr = `
-    INSERT INTO "managers"
+    INSERT INTO "manager"
         (firstname, lastName, email, password, created_at, updated_at)
     VALUES
         ${managerValues};
@@ -77,7 +80,7 @@ async function insertCookingStyles(cookingStyles) {
         return `('${newCookingStyle.label}')`;
     });
     const queryStr = `
-    INSERT INTO "cooking_styles"
+    INSERT INTO "cooking_style"
         (label)
     VALUES
         ${cookingStyleValues};
@@ -110,16 +113,16 @@ return restaurants;
 async function insertRestaurants(restaurants) {
 const restaurantValues = restaurants.map(restaurant => {
 const newRestaurant = functionSeeding.pgQuoteEscape(restaurant);
-    return functionSeeding.pgQuoteEscape(`(
-    "${newRestaurant.name}",
-    "${newRestaurant.description}",
-    "${newRestaurant.terrace}",
-    "${newRestaurant.manager_id}",
-    "${newRestaurant.city_id}"
-    )`);
+    return `(
+    '${newRestaurant.name}',
+    '${newRestaurant.description}',
+    '${newRestaurant.terrace}',
+    '${newRestaurant.manager_id}',
+    '${newRestaurant.city_id}'
+    )`;
 });
 const queryStr = `
-INSERT INTO "restaurants"
+INSERT INTO "restaurant"
     (name, description, terrace, manager_id, city_id)
 VALUES
     ${restaurantValues};
@@ -146,7 +149,7 @@ async function insertRatings(ratings) {
         ${rating.restaurant_id}
         )`);
     const queryStr = `
-    INSERT INTO "ratings"
+    INSERT INTO "rating"
         (value, restaurant_id)
     VALUES
         ${ratingValues};
@@ -211,17 +214,16 @@ function generateCities(nbCities) {
 
   //restaurant_has_cooking_style
 function generateRestaurantHasCS(restaurants, cookingStyleIds) {
-    console.log("nombre de restaurants",restaurants.length );
     const restaurantHasCookingStyles = [];
+    const created_at = faker.date.recent().toISOString();
+    const updated_at = faker.date.recent().toISOString();
        
     for (let index = 0; index < restaurants.length; index++) {
         const restaurantId = index + 1;
 
         const cookingStyleId = [];
-        console.log("nombre de cookingStyleIds",cookingStyleId );
-        
+     
         const nbCookingStyles = faker.number.int({ min: 1, max: 3 });
-        console.log("nombre de cookingStyleIds",nbCookingStyles );
           
         while (cookingStyleId.length < nbCookingStyles) {
             const id = faker.number.int({ min: 1, max: NB_TYPES });
@@ -233,27 +235,32 @@ function generateRestaurantHasCS(restaurants, cookingStyleIds) {
         restaurantHasCookingStyles.push({
             restaurantId,
             cookingStyleId,
+            created_at,
+            updated_at,
         });
      }
-
-console.log(restaurantHasCookingStyles);
 
 return restaurantHasCookingStyles;
 }
 
 async function insertRestaurantHasCS(restaurantHasCookingStyles) {
-    const restaurantHasCookingStyleValues = restaurantHasCookingStyles.map(
-        restaurantHasCookingStyle => `(
-                ${restaurantHasCookingStyle.cookingStyleId},
-                ${restaurantHasCookingStyle.restaurantId}
-            )`
-);
+    const restaurantHasCookingStyleValues = restaurantHasCookingStyles.flatMap(restaurantHasCookingStyle => 
+        restaurantHasCookingStyle.cookingStyleId.map(cookingStyleId => `(
+            ${cookingStyleId}, 
+            ${restaurantHasCookingStyle.restaurantId},
+            '${restaurantHasCookingStyle.created_at}',
+            '${restaurantHasCookingStyle.updated_at}'
+        )`)
+    );
+    
 
 const queryStr = `
-        INSERT INTO "restaurant_has_cooking_style"
+        INSERT INTO "restaurant_cooking_style"
         (
             "cooking_style_id",
-            "restaurant_id"
+            "restaurant_id", 
+            "created_at",
+            "updated_at"
         )
         VALUES
         ${restaurantHasCookingStyleValues}
@@ -294,5 +301,5 @@ async function generateSeedingFile() {
     );
     await insertRestaurantHasCS(restaurantsCookingStyles);
     console.log("RestaurantsCookingStyles inserted");
-    
 }
+
