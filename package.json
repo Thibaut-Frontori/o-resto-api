@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "DEBUG=app:* nodemon --exec ts-node app.ts",
-    "start": "node app.ts",
+    "start": "ts-node app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@apollo/server": "^4.11.3",
     "@faker-js/faker": "^9.3.0",
+    "dataloader": "^2.2.3",
     "debug": "^4.4.0",
     "graphql": "^16.10.0",
+    "graphql-tag": "^2.12.6",
     "pg": "^8.13.1"
   },
   "devDependencies": {
@@ -27,4 +29,3 @@
     "typescript-eslint": "^8.19.0"
   }
 }
-

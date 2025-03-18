@@ -1,36 +1,22 @@
-// npm install @apollo/server express graphql cors
-import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import express from 'express';
-import http from 'http';
-import cors from 'cors';
+import { ApolloServer } from "@apollo/server";
+import { makeExecutableSchema } from "@graphql-tools/schema";
+import express from "express";
+import http from "http";
+import cors from "cors";
+import { expressMiddleware } from "@apollo/server/express4";
+import restaurantSchema from "./app/graphql/schemas/restaurant.ts";
+import restaurantResolvers from "./app/graphql/resolvers/restaurant.ts";
 
-interface MyContext {
-  token?: string;
-}
-
+// ✅ Construire un schéma correct
+const schema = makeExecutableSchema({
+  typeDefs: restaurantSchema,  // Schéma GraphQL (types + queries)
+  resolvers: restaurantResolvers, // Résolveurs
+});
 
 const app = express();
-
 const httpServer = http.createServer(app);
 
-const typeDefs = `
-  type Query {
-    hello: String
-  }
-`;
-const resolvers = {
-  Query: {
-    hello: () => 'Hello, world!',
-  },
-};
-
-const server = new ApolloServer<MyContext>({
-  typeDefs,
-  resolvers,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-});
+const server = new ApolloServer({ schema });
 
 await server.start();
 
@@ -41,7 +27,7 @@ app.use(
   expressMiddleware(server),
 );
 
-// Modified server startup
+// Démarrage du serveur
 await new Promise<void>((resolve) =>
   httpServer.listen({ port: 4000 }, resolve),
 );
